@@ -1,0 +1,18 @@
+export type Role = 'ADMIN' | 'GERENTE' | 'ATENDENTE'
+export type Status = 'ATIVO' | 'INATIVO'
+export type Plano = 'BASICO' | 'INTERMEDIARIO' | 'PREMIUM'
+export type TipoInteracao =
+  | 'WHATSAPP'
+  | 'INSTAGRAM'
+  | 'FACEBOOK'
+  | 'TELEFONE'
+  | 'EMAIL'
+  | 'SMS'
+  | 'NOTA'
+export type StatusVenda = 'PENDENTE' | 'CONCLUIDA' | 'CANCELADA'
+export type TipoAutomacao =
+  | 'REATIVACAO'
+  | 'POS_VENDA'
+  | 'ANIVERSARIO'
+  | 'FOLLOWUP'
+  | 'CUSTOMIZADA'
