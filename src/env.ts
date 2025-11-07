@@ -9,26 +9,23 @@ export const env = createEnv({
    * Acessíveis apenas em APIs, getServerSideProps, e Server Components.
    */
   server: {
-    // Banco de Dados
+    // Banco de Dados (OBRIGATÓRIO)
     DATABASE_URL: z.string().url(),
-    DIRECT_URL: z.string().url(),
+    DIRECT_URL: z.string().url().optional(),
 
-    // Autenticação (NextAuth/JWT)
+    // Autenticação (OBRIGATÓRIO)
     NEXTAUTH_URL: z.string().url(),
     NEXTAUTH_SECRET: z.string().min(1),
-    JWT_SECRET: z.string().min(1),
-
-    // Chave de Criptografia
-    // CORREÇÃO: Removido .length(32) para evitar erro 'Too big' em chaves seguras.
-    ENCRYPTION_KEY: z.string().min(1),
-
-    // Integrações
-    EVOLUTION_API_URL: z.string().url(),
-    EVOLUTION_API_KEY: z.string().min(1),
-    CHATWOOT_API_URL: z.string().url(),
-    CHATWOOT_WEBHOOK_SECRET: z.string().min(1),
-    SUPER_ADMIN_EMAIL: z.string().email(),
-    SUPER_ADMIN_PASSWORD: z.string().min(8),
+    
+    // Opcionais
+    JWT_SECRET: z.string().min(1).optional(),
+    ENCRYPTION_KEY: z.string().min(1).optional(),
+    EVOLUTION_API_URL: z.string().url().optional(),
+    EVOLUTION_API_KEY: z.string().min(1).optional(),
+    CHATWOOT_API_URL: z.string().url().optional(),
+    CHATWOOT_WEBHOOK_SECRET: z.string().min(1).optional(),
+    SUPER_ADMIN_EMAIL: z.string().email().optional(),
+    SUPER_ADMIN_PASSWORD: z.string().min(8).optional(),
 
     // Provedores Social (Google) - APENAS SE FOR USAR
     // GOOGLE_CLIENT_ID: z.string().min(1).optional(),
@@ -71,5 +68,5 @@ export const env = createEnv({
   },
 
   // Não mostrar variáveis de ambiente do servidor no lado do cliente
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'production',
 });
