@@ -5,10 +5,15 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   console.log('🔵 POST /api/clientes - Iniciando...');
+  console.log('🔍 Headers:', Object.fromEntries(request.headers.entries()));
   
   try {
     const session = await getServerSession(authOptions);
+    console.log('🔍 Session:', session ? 'Existe' : 'Null');
+    console.log('🔍 Session completa:', JSON.stringify(session, null, 2));
+    
     if (!session) {
+      console.log('❌ Sessão não encontrada - retornando 401');
       return NextResponse.json(
         { success: false, error: 'Acesso não autorizado' },
         { status: 401 }
