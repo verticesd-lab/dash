@@ -1,4 +1,4 @@
-# 🚀 Micro CRM SaaS
+# 🚀 Micro CRM SaaS - Deploy v1.0
 
 Sistema completo de CRM multi-tenant desenvolvido com Next.js 16, TypeScript, Prisma e NextAuth.
 
