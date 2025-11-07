@@ -100,10 +100,15 @@ export async function POST(req: NextRequest) {
       })
       console.log('✅ Usuário admin criado:', usuario.id)
 
-      // Criar registro de integração vazio
+      // Criar registro de integração com tokens gerados
+      const apiToken = `api_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+      const webhookSecret = `whk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+      
       const integracao = await tx.integracao.create({
         data: {
           empresaId: empresa.id,
+          apiToken,
+          webhookSecret,
         }
       })
       console.log('✅ Integração criada:', integracao.id)
