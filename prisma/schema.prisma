@@ -1,53 +1,34 @@
-// Schema Prisma do CRM multi-tenant com Lead Pool centralizado
-
-// CAMADA 1: MULTI-TENANT (Dados dos Clientes)
-model Empresa {
-  id            String   @id @default(cuid())
-  nome          String
-  cnpj          String?  @unique
-  segmento      String
-  plano         Plano    @default(BASICO)
-  ativa         Boolean  @default(true)
-  telefone      String
-  email         String
-  endereco      String?
-  cidade        String
-  configuracao  Json?
-  criadoEm      DateTime @default(now())
-  atualizadoEm  DateTime @updatedAt
-  
-  usuarios      Usuario[]
-  clientes      Cliente[]
-  produtos      Produto[]
-  vendas        Venda[]
-  interacoes    Interacao[]
-  automacoes    Automacao[]
-  integracao    Integracao?
-  
-  @@index([segmento])
-  @@index([cidade])
+generator client {
+  provider = "prisma-client-js"
 }
 
-model Usuario {
-  id            String   @id @default(cuid())
-  empresaId     String
-  nome          String
-  email         String
-  senha         String
-  role          Role     @default(ATENDENTE)
-  ativo         Boolean  @default(true)
-  criadoEm      DateTime @default(now())
-  
-  empresa       Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  vendas        Venda[]
-  interacoes    Interacao[]
-  
-  @@unique([email, empresaId])
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Automacao {
+  id           String        @id @default(cuid())
+  empresaId    String
+  nome         String
+  descricao    String?
+  tipo         TipoAutomacao
+  ativo        Boolean       @default(true)
+  gatilho      Json
+  acoes        Json
+  ultimaExec   DateTime?
+  proximaExec  DateTime?
+  criadoEm     DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
+  Empresa      Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([ativo])
   @@index([empresaId])
+  @@index([proximaExec])
 }
 
 model Cliente {
-  id                    String    @id @default(cuid())
+  id                    String      @id @default(cuid())
   empresaId             String
   nome                  String
   telefone              String
@@ -60,30 +41,128 @@ model Cliente {
   dataNascimento        DateTime?
   tags                  String[]
   observacoes           String?
-  status                Status    @default(ATIVO)
+  status                Status      @default(ATIVO)
   origem                String?
-  valorTotal            Decimal   @default(0)
-  totalCompras          Int       @default(0)
+  valorTotal            Decimal     @default(0)
+  totalCompras          Int         @default(0)
   ultimaCompra          DateTime?
-  consentimentoLeadPool Boolean   @default(false)
+  consentimentoLeadPool Boolean     @default(false)
   dataConsentimento     DateTime?
-  criadoEm              DateTime  @default(now())
-  atualizadoEm          DateTime  @updatedAt
-  
-  empresa               Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  vendas                Venda[]
-  interacoes            Interacao[]
-  leadPoolEntry         LeadPool?
-  
+  criadoEm              DateTime    @default(now())
+  atualizadoEm          DateTime    @updatedAt
+  Empresa               Empresa     @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  Interacao             Interacao[]
+  LeadPool              LeadPool?
+  Venda                 Venda[]
+
   @@unique([telefone, empresaId])
+  @@index([consentimentoLeadPool])
+  @@index([email])
   @@index([empresaId])
   @@index([telefone])
-  @@index([email])
-  @@index([consentimentoLeadPool])
+}
+
+model Empresa {
+  id           String      @id @default(cuid())
+  nome         String
+  cnpj         String?     @unique
+  segmento     String
+  plano        Plano       @default(BASICO)
+  ativa        Boolean     @default(true)
+  telefone     String
+  email        String
+  endereco     String?
+  cidade       String
+  configuracao Json?
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
+  Automacao    Automacao[]
+  Cliente      Cliente[]
+  Integracao   Integracao?
+  Interacao    Interacao[]
+  Produto      Produto[]
+  Usuario      Usuario[]
+  Venda        Venda[]
+
+  @@index([cidade])
+  @@index([segmento])
+}
+
+model Integracao {
+  id                  String   @id @default(cuid())
+  empresaId           String   @unique
+  chatwootUrl         String?
+  chatwootToken       String?
+  chatwootAccountId   String?
+  chatwootAtivo       Boolean  @default(false)
+  evolutionUrl        String?
+  evolutionApiKey     String?
+  evolutionInstance   String?
+  evolutionAtivo      Boolean  @default(false)
+  activepiecesWebhook String?
+  activepiecesAtivo   Boolean  @default(false)
+  apiToken            String   @unique
+  webhookSecret       String
+  criadoEm            DateTime @default(now())
+  atualizadoEm        DateTime @updatedAt
+  Empresa             Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  @@index([apiToken])
+}
+
+model Interacao {
+  id        String        @id @default(cuid())
+  empresaId String
+  clienteId String
+  usuarioId String?
+  tipo      TipoInteracao
+  canal     String?
+  mensagem  String
+  anexos    String[]
+  origem    String?
+  metadados Json?
+  criadoEm  DateTime      @default(now())
+  Cliente   Cliente       @relation(fields: [clienteId], references: [id])
+  Empresa   Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  Usuario   Usuario?      @relation(fields: [usuarioId], references: [id])
+
+  @@index([clienteId])
+  @@index([criadoEm])
+  @@index([empresaId])
+}
+
+model LeadPool {
+  id                 String    @id @default(cuid())
+  nome               String
+  telefone           String    @unique
+  email              String?
+  cidade             String?
+  estado             String?
+  empresaOrigemId    String
+  clienteOrigemId    String    @unique
+  segmentoOrigem     String
+  totalInteracoes    Int       @default(0)
+  totalCompras       Int       @default(0)
+  valorTotalGasto    Decimal   @default(0)
+  ultimaInteracao    DateTime?
+  scoreEngajamento   Int       @default(0)
+  tags               String[]
+  consentimento      Boolean   @default(true)
+  dataConsentimento  DateTime
+  fonteConsentimento String
+  ativo              Boolean   @default(true)
+  criadoEm           DateTime  @default(now())
+  atualizadoEm       DateTime  @updatedAt
+  Cliente            Cliente   @relation(fields: [clienteOrigemId], references: [id])
+
+  @@index([empresaOrigemId])
+  @@index([scoreEngajamento])
+  @@index([segmentoOrigem])
+  @@index([telefone])
 }
 
 model Produto {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   empresaId     String
   nome          String
   descricao     String?
@@ -91,167 +170,122 @@ model Produto {
   preco         Decimal
   custoCompra   Decimal?
   margemLucro   Decimal?
-  ativo         Boolean  @default(true)
+  ativo         Boolean     @default(true)
   estoque       Int?
   estoqueMinimo Int?
   metadados     Json?
-  criadoEm      DateTime @default(now())
-  atualizadoEm  DateTime @updatedAt
-  
-  empresa       Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  vendaItems    VendaItem[]
-  
-  @@index([empresaId])
+  criadoEm      DateTime    @default(now())
+  atualizadoEm  DateTime    @updatedAt
+  Empresa       Empresa     @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  VendaItem     VendaItem[]
+
   @@index([categoria])
+  @@index([empresaId])
+}
+
+model Usuario {
+  id        String      @id @default(cuid())
+  empresaId String
+  nome      String
+  email     String
+  senha     String
+  role      Role        @default(ATENDENTE)
+  ativo     Boolean     @default(true)
+  criadoEm  DateTime    @default(now())
+  Interacao Interacao[]
+  Empresa   Empresa     @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  Venda     Venda[]
+
+  @@unique([email, empresaId])
+  @@index([empresaId])
 }
 
 model Venda {
-  id                String      @id @default(cuid())
-  empresaId         String
-  clienteId         String
-  usuarioId         String
-  valorBruto        Decimal
-  desconto          Decimal     @default(0)
-  valorTotal        Decimal
-  formaPagamento    String
-  parcelas          Int?
-  status            StatusVenda @default(CONCLUIDA)
-  observacoes       String?
-  criadoEm          DateTime    @default(now())
-  
-  empresa           Empresa     @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente           Cliente     @relation(fields: [clienteId], references: [id])
-  usuario           Usuario     @relation(fields: [usuarioId], references: [id])
-  items             VendaItem[]
-  
-  @@index([empresaId])
+  id             String      @id @default(cuid())
+  empresaId      String
+  clienteId      String
+  usuarioId      String
+  valorBruto     Decimal
+  desconto       Decimal     @default(0)
+  valorTotal     Decimal
+  formaPagamento String
+  parcelas       Int?
+  status         StatusVenda @default(CONCLUIDA)
+  observacoes    String?
+  criadoEm       DateTime    @default(now())
+  Cliente        Cliente     @relation(fields: [clienteId], references: [id])
+  Empresa        Empresa     @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  Usuario        Usuario     @relation(fields: [usuarioId], references: [id])
+  VendaItem      VendaItem[]
+
   @@index([clienteId])
   @@index([criadoEm])
+  @@index([empresaId])
 }
 
 model VendaItem {
-  id          String  @id @default(cuid())
-  vendaId     String
-  produtoId   String
-  quantidade  Int
-  precoUnit   Decimal
-  subtotal    Decimal
-  
-  venda       Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
-  produto     Produto @relation(fields: [produtoId], references: [id])
-  
+  id         String  @id @default(cuid())
+  vendaId    String
+  produtoId  String
+  quantidade Int
+  precoUnit  Decimal
+  subtotal   Decimal
+  Produto    Produto @relation(fields: [produtoId], references: [id])
+  Venda      Venda   @relation(fields: [vendaId], references: [id], onDelete: Cascade)
+
   @@index([vendaId])
 }
 
-model Interacao {
-  id          String         @id @default(cuid())
-  empresaId   String
-  clienteId   String
-  usuarioId   String?
-  tipo        TipoInteracao
-  canal       String?
-  mensagem    String         @db.Text
-  anexos      String[]
-  origem      String?
-  metadados   Json?
-  criadoEm    DateTime       @default(now())
-  
-  empresa     Empresa        @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  cliente     Cliente        @relation(fields: [clienteId], references: [id])
-  usuario     Usuario?       @relation(fields: [usuarioId], references: [id])
-  
-  @@index([empresaId])
-  @@index([clienteId])
-  @@index([criadoEm])
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  plan      AuthPlan @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clients   Client[]
+  users     User[]
+
+  @@map("tenants")
 }
 
-model Automacao {
-  id          String          @id @default(cuid())
-  empresaId   String
-  nome        String
-  descricao   String?
-  tipo        TipoAutomacao
-  ativo       Boolean         @default(true)
-  gatilho     Json
-  acoes       Json
-  ultimaExec  DateTime?
-  proximaExec DateTime?
-  criadoEm    DateTime        @default(now())
-  atualizadoEm DateTime       @updatedAt
-  
-  empresa     Empresa         @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  
-  @@index([empresaId])
-  @@index([ativo])
-  @@index([proximaExec])
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(USER)
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@map("auth_users")
 }
 
-model Integracao {
-  id                    String   @id @default(cuid())
-  empresaId             String   @unique
-  chatwootUrl           String?
-  chatwootToken         String?
-  chatwootAccountId     String?
-  chatwootAtivo         Boolean  @default(false)
-  evolutionUrl          String?
-  evolutionApiKey       String?
-  evolutionInstance     String?
-  evolutionAtivo        Boolean  @default(false)
-  activepiecesWebhook   String?
-  activepiecesAtivo     Boolean  @default(false)
-  apiToken              String   @unique @default(cuid())
-  webhookSecret         String   @default(cuid())
-  criadoEm              DateTime @default(now())
-  atualizadoEm          DateTime @updatedAt
-  
-  empresa               Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  
-  @@index([apiToken])
-}
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
 
-// CAMADA 2: LEAD POOL CENTRALIZADO
-model LeadPool {
-  id                String    @id @default(cuid())
-  nome              String
-  telefone          String    @unique
-  email             String?
-  cidade            String?
-  estado            String?
-  empresaOrigemId   String
-  clienteOrigemId   String    @unique
-  segmentoOrigem    String
-  totalInteracoes   Int       @default(0)
-  totalCompras      Int       @default(0)
-  valorTotalGasto   Decimal   @default(0)
-  ultimaInteracao   DateTime?
-  scoreEngajamento  Int       @default(0)
-  tags              String[]
-  consentimento     Boolean   @default(true)
-  dataConsentimento DateTime
-  fonteConsentimento String
-  ativo             Boolean   @default(true)
-  criadoEm          DateTime  @default(now())
-  atualizadoEm      DateTime  @updatedAt
-  
-  clienteOrigem     Cliente   @relation(fields: [clienteOrigemId], references: [id])
-  
-  @@index([telefone])
-  @@index([empresaOrigemId])
-  @@index([segmentoOrigem])
-  @@index([scoreEngajamento])
-}
-
-// ENUMS
-enum Plano {
-  BASICO
-  INTERMEDIARIO
-  PREMIUM
+  @@map("auth_clients")
 }
 
 enum Role {
   ADMIN
   GERENTE
   ATENDENTE
+}
+
+enum Plano {
+  BASICO
+  INTERMEDIARIO
+  PREMIUM
 }
 
 enum Status {
@@ -265,6 +299,14 @@ enum StatusVenda {
   CANCELADA
 }
 
+enum TipoAutomacao {
+  REATIVACAO
+  POS_VENDA
+  ANIVERSARIO
+  FOLLOWUP
+  CUSTOMIZADA
+}
+
 enum TipoInteracao {
   WHATSAPP
   INSTAGRAM
@@ -275,22 +317,15 @@ enum TipoInteracao {
   NOTA
 }
 
-enum TipoAutomacao {
-  REATIVACAO
-  POS_VENDA
-  ANIVERSARIO
-  FOLLOWUP
-  CUSTOMIZADA
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  USER
 }
 
-// CONFIGURAÇÕES
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // <--- ESTA É A LINHA CRUCIAL
-}
-
-generator client {
-  provider = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
+enum AuthPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
 }
