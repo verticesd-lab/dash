@@ -1,0 +1,27 @@
+# ============================================
+# VARIÁVEIS DE AMBIENTE - PRODUÇÃO
+# ============================================
+# COPIE ESTAS VARIÁVEIS PARA A VERCEL
+
+# ===== BANCO DE DADOS (OBRIGATÓRIO) =====
+DATABASE_URL=postgresql://postgres:AtS%2Fe_eS%2FvpBq65@db.lippbdvedrqdckcnrdyp.supabase.co:6543/postgres?pgbouncer=true
+
+DIRECT_URL=postgresql://postgres:AtS%2Fe_eS%2FvpBq65@db.lippbdvedrqdckcnrdyp.supabase.co:5432/postgres
+
+# ===== NEXTAUTH (OBRIGATÓRIO) =====
+NEXTAUTH_URL=https://dash.vercel.app
+NEXTAUTH_SECRET=c315d1ef01d1a8e122f18ab197adc1e5
+
+# ===== SUPER ADMIN (OPCIONAL) =====
+SUPER_ADMIN_EMAIL=admin@exemplo.com
+SUPER_ADMIN_PASSWORD=SenhaForte123!
+
+# ============================================
+# INSTRUÇÕES:
+# ============================================
+# 1. Copie cada variável acima
+# 2. Cole na Vercel em: Settings → Environment Variables
+# 3. Depois do deploy, atualize NEXTAUTH_URL com a URL real
+# 4. Configure SUPER_ADMIN_EMAIL e PASSWORD se quiser login de super admin
+# 5. NÃO COMMITE ESTE ARQUIVO NO GIT!
+# ============================================
