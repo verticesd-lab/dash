@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 
 // Importa o componente que você acabou de criar
-import { Providers } from './providers.tsx'; 
+import { Providers } from './providers'; 
 import './globals.css';
 import { Inter } from 'next/font/google'; 
 
