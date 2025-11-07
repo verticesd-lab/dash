@@ -29,12 +29,16 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Senha", type: "password" }
       },
       async authorize(credentials): Promise<any> {
+        console.log('🔐 Tentativa de login:', credentials?.email);
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Credenciais incompletas');
           return null;
         }
 
         // Verifica se é o Super Admin
         if (env.SUPER_ADMIN_EMAIL && credentials.email === env.SUPER_ADMIN_EMAIL && credentials.password === env.SUPER_ADMIN_PASSWORD) {
+          console.log('✅ Login como Super Admin');
           return {
             id: "super-admin-id",
             email: env.SUPER_ADMIN_EMAIL,
@@ -45,10 +49,13 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Se não for Super Admin, tenta usuário normal
+        console.log('🔍 Buscando usuário no banco...');
         const usuario = await prisma.usuario.findFirst({
           where: { email: credentials.email },
           include: { Empresa: true }
         });
+        
+        console.log('🔍 Usuário encontrado:', usuario ? 'Sim' : 'Não');
 
         if (!usuario || !usuario.ativo) {
           return null;
@@ -59,17 +66,23 @@ export const authOptions: NextAuthOptions = {
           usuario.senha
         );
 
+        console.log('🔍 Validando senha...');
+        
         if (!senhaValida) {
+          console.log('❌ Senha inválida');
           return null;
         }
 
-        return {
+        console.log('✅ Login bem-sucedido!');
+        const userObj = {
           id: usuario.id,
           email: usuario.email,
           name: usuario.nome,
           tenantId: usuario.empresaId,
           role: usuario.role as "ADMIN" | "GERENTE" | "ATENDENTE",
         };
+        console.log('👤 Retornando usuário:', JSON.stringify(userObj, null, 2));
+        return userObj;
       }
     }),
   ],
